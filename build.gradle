@@ -1,0 +1,136 @@
+buildscript {
+    ext {
+        springIOVersion = '1.0.9.RELEASE'
+        springBootVersion = '2.2.5.RELEASE'
+        springBootGradleVersion = '2.0.0.M2'
+    }
+    repositories {
+        jcenter()
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://repo.spring.io/release" }
+        maven { url "https://repo.spring.io/milestone" }
+        maven { url "https://repo.spring.io/snapshot" }
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+
+    dependencies {
+        classpath "io.spring.gradle:dependency-management-plugin:${springIOVersion}"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootGradleVersion}"
+    }
+}
+plugins {
+    id 'java'
+    id "io.spring.dependency-management" version "1.0.9.RELEASE"
+}
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+group 'com.zbum.example.socket.server'
+version '1.0.1'
+
+sourceCompatibility = 1.8
+
+repositories {
+    maven {
+        url 'https://maven.aliyun.com/repository/public'
+    }
+    // maven {
+    //     credentials {
+    //         username 'YOhhEI'
+    //         password 'jF3X8yftEm'
+    //     }
+    //     url 'https://repo.rdc.aliyun.com/repository/4830-release-Gq3UzY/'
+    // }
+}
+ext {
+    springBootVersion = "2.2.5.RELEASE"
+    springCloudVersion = 'Hoxton.SR3'
+}
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.12'
+	annotationProcessor 'org.projectlombok:lombok:1.18.12'
+	testCompileOnly 'org.projectlombok:lombok:1.18.12'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+    compile('io.netty:netty-all:4.1.45.Final')
+    compile('org.springframework.boot:spring-boot-starter-parent:2.2.5.RELEASE')
+    compile('org.springframework.boot:spring-boot-starter:2.2.5.RELEASE')
+}
+//打包源码
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+
+task cleanBuild(type: Delete) {
+    delete 'build/'
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+}
+
+jar {
+    enabled = true
+}
+bootJar {
+    mainClass = 'com.zbum.example.socket.server.MantyChatApplication'
+    manifest {
+        attributes 'Start-Class': 'com.zbum.example.socket.server.MantyChatApplication'
+    }
+    excludeDevtools = true
+    // launchScript {
+    // 	included = true
+    // }
+}
+
+bootRun {
+    main = 'com.zbum.example.socket.server.MantyChatApplication'
+}
+// task copyJars(type: Copy) {
+//     from configurations.runtime
+//     into 'build/libs/' + project.name + '_lib' // 目标位置
+// }
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+// task copyConfig(type: Copy) {
+//     from 'src/resources'
+//     into 'build/libs/'
+//     include('**/*.*')
+// }
+
+task docs(type: Javadoc) {
+    source = sourceSets.main.allJava
+    options.memberLevel = JavadocMemberLevel.PRIVATE
+    classpath = configurations.compile
+    destinationDir = file("./javadoc/")
+}
+
+//便于后面自动构建
+// task release(type: Copy, dependsOn: [cleanBuild, copyJars, copyConfig, bootJar])
+
+task run(dependsOn: [clean, bootRun], description: 'Run Application') {
+    doFirst {
+        clean
+    }
+}
+
+task release(dependsOn: [bootJar], description: 'Release Application') {
+    doFirst {
+        clean
+        cleanBuild
+    }
+}
